@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+
+<link rel="stylesheet" href="css/style.css" media="screen" />
+<body>
+	<div id="container">
+	<div class="score">
+		<div id="score-value">
+		0
+		</span>
+	</div>
+	</div>
+	<div id="dialogue">
+	
+	<h1>Game Over</h1>
+	<span>Press any key to contine</span>
+	</div>	
+	</div>
+
+
+	<script type="text/javascript">
+		(function() {
+			
+			function getRandom(min, max) {
+				return Math.floor(Math.random()*(max-min+1)+min);
+			}
+			var IsPause = false;
+			var gameState= false;
+			var numberOfPipes = 3;
+			var containerWidth =  800;
+			var containerHeight = 600; 
+			var pipeWidth	= 80;
+
+			function Pipe() {
+				this.x1 = 0;
+				this.y1 = 0;
+				this.y2 = 0;
+				
+				this.element1;
+				this.element2;
+				
+				this.init = function() {
+					this.element1 = document.createElement('div');
+					this.element1.setAttribute('class', 'pipe-0');
+					this.element1.style.top = this.y1 + 'px';
+					this.element1.style.left = this.x1 + 'px';
+					this.element2 = document.createElement('div');
+					this.element2.setAttribute('class', 'pipe-1');
+					this.element2.style.top = this.y2 + 'px';
+					this.element2.style.left = this.x1 + 'px';
+					document.getElementById('container').appendChild(this.element1);
+					document.getElementById('container').appendChild(this.element2);
+				}
+
+				this.redraw = function() {
+					this.element1.style.top = this.y1 + 'px';
+					this.element1.style.left = this.x1 + 'px';
+					this.element2.style.top = this.y2 + 'px';
+					this.element2.style.left = this.x1 + 'px';
+				
+				}
+				
+				this.moveBack = function(){
+				this.x1 = this.x1+3*(containerWidth/2);
+				this.y1 = - getRandom(100,400);
+				this.y2 = this.y1+getRandom(600,800);
+				
+				
+				}
+
+			}
+			
+			function Bird() {
+				this.x = 10;
+				this.y = 400;
+				this.collide = 0;
+				this.element;
+				
+
+				this.init = function() {
+					this.element = document.createElement('div');
+					this.element.setAttribute('class', 'bird');
+					this.element.style.top = this.y + 'px';
+					this.element.style.left = this.x + 'px';
+					document.getElementById('container').appendChild(this.element);
+				}
+				
+				this.movedown = function() {
+						this.y=this.y+2;
+				}
+				
+				
+				this.restart = function() {
+					this.x = 10;
+					this.y = 400;
+					this.element.style.top = this.y + 'px';
+					this.element.style.left = this.x + 'px';	
+				}
+				
+				this.reposition = function() {
+					if(this.y <= -10) this.y=-10;
+					if(this.y > 600) this.y=600;
+					this.element.style.top = this.y + 'px';
+				}
+			}
+			
+			function Score(){
+			this.score = 0;
+			this.element;
+			this.init = function(){
+					this.element = document.getElementById('score-value');
+					this.element.innerHTML = 0;
+				}
+			this.update = function(){
+					this.element.innerHTML = parseInt(this.score/(containerWidth/4));
+				}
+			this.reset = function(){
+					this.score = 0;
+					this.element.innerHTML = 0;
+				}
+			}
+			
+			function Dialog(){
+			
+			this.element = document.getElementById('dialogue');
+				
+				this.init = function(){
+					this.element.style.visibility = "hidden";
+				}
+				
+				this.show = function(){
+					this.element.style.visibility = "visible";
+				}
+				
+				
+			}
+
+			
+			function Background(){
+				this.element;
+				this.x= 0;
+				this.init = function() {
+					this.element = document.getElementById('container');
+					this.element.style.backgroundPosition = "0px 0px"; 
+				}
+				
+				this.move = function(){
+					this.x = this.x+4;
+					this.element.style.backgroundPosition = this.x +"px 0px"; 
+				}
+				
+			}
+			
+			function removeElementsByClass(className){
+				var elements = document.getElementsByClassName(className);
+				while(elements.length > 0)
+					{
+					elements[0].parentNode.removeChild(elements[0]);
+					}
+				}
+
+			function FlappyAnimation() 
+			{
+				var that = this;
+				var background = new Background();
+				var bird = new Bird();
+				var score = new Score();
+				var dialogue = new Dialog();
+				var startGame;
+				this.pipes = [];
+				
+				this.init = function() 
+				{
+					gameState=false;
+					background.init();
+					dialogue.init();
+				
+					bird.init();
+					score.init();
+				
+				
+					for (var i=0; i < numberOfPipes; i++) 
+					{
+						var pipe = new Pipe();
+						pipe.x1 = (i+1)*(containerWidth/2);
+						pipe.y1 = - getRandom(100,400);
+						pipe.y2 = pipe.y1+getRandom(600,700);
+						pipe.init();
+
+						this.pipes.push(pipe);
+					}
+					
+					startGame = setInterval(this.animate, 20);
+				}
+				
+				
+				this.restart = function() 
+				{
+					gameState=false;
+					background.x=0;
+					dialogue.init();
+				
+					bird.restart();
+					score.reset();
+				
+					
+					for(var i=0; i < numberOfPipes; i++)
+					{
+						var pipe = that.pipes[i];
+						pipe.x1 = (i+1)*(containerWidth/2);
+						pipe.y1 = - getRandom(100,400);
+						pipe.y2 = pipe.y1+getRandom(600,700);
+						pipe.redraw();
+					}
+					
+				}
+				
+				this.reset = function(){
+					IsPause =true;
+					dialogue.show();
+					document.onkeypress=function(e)
+					{
+						if(gameState){
+							dialogue.init();
+							that.restart();
+							IsPause= false;
+						}
+					}
+				
+				}
+
+				
+				this.animate= function()
+				{
+					if(!IsPause){
+					if(bird.y >= containerHeight){
+						gameState = true;
+						that.reset();
+					}
+					console.log(that.pipes);
+					for(var j=0; j < numberOfPipes ; j++)
+					{
+						var a = bird.x - that.pipes[j].x1;
+						var b = bird.y - (that.pipes[j].y1+500);
+						var c = bird.y - (that.pipes[j].y2);
+						
+						if( (a>=-75 && a<=45) && (b < -10 || c > -40)){
+							gameState = true;
+							that.reset();
+							
+						}
+						
+					}
+					
+					for(var i=0; i < numberOfPipes; i++)
+					{
+						var pipe = that.pipes[i];
+						if(pipe.x1 < -pipeWidth){
+							pipe.moveBack();
+						}
+						pipe.x1=pipe.x1-2;
+						pipe.redraw();
+					}
+					
+					score.score++;
+					bird.movedown();
+					background.move();
+					
+					document.onkeydown = function(e) 
+					{
+						switch (e.keyCode) {
+							case 32:
+							bird.y=bird.y-50;
+							break;
+						}
+					};
+					
+					
+					
+					bird.reposition();
+					score.update();
+					
+					}
+					
+				}
+			}
+			new FlappyAnimation().init();
+		})();
+	</script>
+</body>
+</html>
